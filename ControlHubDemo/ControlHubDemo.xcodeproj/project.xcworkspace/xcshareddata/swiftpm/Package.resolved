@@ -1,0 +1,24 @@
+{
+  "originHash" : "541fb128f59ba1b15e4e4a3a038068c258b495aac508c1c1e01a54bfed318deb",
+  "pins" : [
+    {
+      "identity" : "controlhub",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AmirDaliri/ControlHub.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "f01f2d354847a41dfe1af3e7f4555c5b224736bc"
+      }
+    },
+    {
+      "identity" : "starscream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/daltoniam/Starscream.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "c6bfd1af48efcc9a9ad203665db12375ba6b145a"
+      }
+    }
+  ],
+  "version" : 3
+}
