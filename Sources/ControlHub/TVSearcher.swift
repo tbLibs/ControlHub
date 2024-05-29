@@ -28,6 +28,7 @@ public protocol TVSearchObserving: AnyObject {
     func tvSearchDidStop()
     func tvSearchDidFindTV(_ tv: TV, service: Service)
     func tvSearchDidLoseTV(_ tv: TV)
+    func tvSearchDidFailToLaunchApp(_ error: Error) // New method
 }
 
 public class TVSearcher: TVSearching, TVSearchObserving {
@@ -96,19 +97,12 @@ public class TVSearcher: TVSearching, TVSearchObserving {
         }
     }
     
-    // MARK: Connect to Device
-
-    private func connectToDevice(_ tv: TV) {
-        Service.getById(tv.id) { [weak self] service, error in
-            guard let self = self, let service = service, error == nil else {
-                // TODO:  Handle App Instalation
-                debugPrint("Service not found for TV ID: \(tv.id)")
-                return
-            }
-            self.connectedService = service
+    public func tvSearchDidFailToLaunchApp(_ error: Error) {
+        observers.forEach {
+            $0.tvSearchDidFailToLaunchApp(error)
         }
     }
-
+    
     // MARK: Launch Apps
     
     public func launchApplication(app: TVRemoteCommand.Params.App) {
@@ -117,22 +111,23 @@ public class TVSearcher: TVSearching, TVSearchObserving {
     
     private func launchApp(appID: String, channelURI: String) {
         guard let service = connectedService else {
-            debugPrint("No service connected")
+            tvSearchDidFailToLaunchApp(TVCommanderError.noServiceConnected)
             return
         }
 
-        let app = service.createApplication(appID as AnyObject, channelURI: channelURI, args: nil)
-        app?.connect(nil, completionHandler: { client, error in
+        guard let app = service.createApplication(appID as AnyObject, channelURI: channelURI, args: nil) else {
+            tvSearchDidFailToLaunchApp(TVCommanderError.appCreationFailed)
+            return
+        }
+        
+        app.connect(nil, completionHandler: { client, error in
             if let error = error {
-                debugPrint("Error connecting to app \(channelURI): \(error.localizedDescription)")
+                self.tvSearchDidFailToLaunchApp(TVCommanderError.connectionError(error))
             } else {
-                debugPrint("\(channelURI) connected successfully")
-                app?.start { success, error in
+                app.start { success, error in
                     if let error = error {
-                        debugPrint("Error launching app \(channelURI): \(error.localizedDescription)")
-                    } else {
-                        debugPrint("\(channelURI) launched successfully")
-                    }
+                        self.tvSearchDidFailToLaunchApp(TVCommanderError.launchError(error))
+                    } 
                 }
             }
         })

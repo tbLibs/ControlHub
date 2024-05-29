@@ -36,6 +36,14 @@ public enum TVCommanderError: Error {
     case wakeOnLANConnectionError(Error)
     // wake on LAN content processing error
     case wakeOnLANProcessingError(Error)
+    // No service is connected when attempting to launch the app.
+    case noServiceConnected
+    // Failed to create the application for the specified appID and channelURI.
+    case appCreationFailed
+    // Error occurred while connecting to the app.
+    case connectionError(Error)    
+    // Error occurred while launching the app.
+    case launchError(Error)
     // an unknown error occurs.
     case unknownError(Error?)
 }
