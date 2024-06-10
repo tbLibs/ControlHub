@@ -255,20 +255,120 @@ public struct TVRemoteCommand: Codable {
             case home = "KEY_HOME"
         }
 
+        /// [1 - Netflix]
+        /// - App Name                            :     Netflix
+        /// - App Version                         :     5.2.550
+        /// - App ID - WAS                        :     3201907018807
+        /// - App ID - Tizen                      :     org.tizen.netflixapp
+        /// -----------------------------------------------------------------------------------------------------
+        /// [2 - Prime Video]
+        /// - App Name                            :     Prime Video
+        /// - App Version                         :     2.01.26
+        /// - App ID - WAS                        :     3201910019365
+        /// - App ID - Tizen                      :     org.tizen.primevideo
+        /// -----------------------------------------------------------------------------------------------------
+        /// [3 - Hulu]
+        /// - App Name                            :     Hulu
+        /// - App Version                         :     5.3.263
+        /// - App ID - WAS                        :     3201601007625
+        /// - App ID - Tizen                      :     LBUAQX1exg.Hulu
+        /// -----------------------------------------------------------------------------------------------------
+        /// [4 - Disney+]
+        /// - App Name                            :     Disney+
+        /// - App Version                         :     1.6.0
+        /// - App ID - WAS                        :     3201901017640
+        /// - App ID - Tizen                      :     MCmYXNxgcu.DisneyPlus
+        /// -----------------------------------------------------------------------------------------------------
+        /// [5 - Apple TV]
+        /// - App Name                            :     Apple TV
+        /// - App Version                         :     6.2.2
+        /// - App ID - WAS                        :     3201807016597
+        /// - App ID - Tizen                      :     com.samsung.tv.ariavideo
+        /// -----------------------------------------------------------------------------------------------------
+        /// [6 - VUDU]
+        /// - App Name                            :     VUDU
+        /// - App Version                         :     7.9.39
+        /// - App ID - WAS                        :     111012010001
+        /// - App ID - Tizen                      :     kk8MbItQ0H.VUDU
+        /// -----------------------------------------------------------------------------------------------------
+        /// [7 - YouTube]
+        /// - App Name                            :     YouTube
+        /// - App Version                         :     2.1.498
+        /// - App ID - WAS                        :     111299001912
+        /// - App ID - Tizen                      :     9Ur5IzDKqV.TizenYouTube
+        /// -----------------------------------------------------------------------------------------------------
+        /// [8 - Gallery]
+        /// - App Name                            :     Gallery
+        /// - App Version                         :     1.9.216
+        /// - App ID - WAS                        :     3201710015037
+        /// - App ID - Tizen                      :     com.samsung.tv.gallery
+        /// -----------------------------------------------------------------------------------------------------
+        /// [9 - Internet]
+        /// - App Name                            :     Internet
+        /// - App Version                         :     3.1.11260
+        /// - App ID - WAS                        :     3201907018784
+        /// - App ID - Tizen                      :     org.tizen.browser
+        /// -----------------------------------------------------------------------------------------------------
+        /// [10 - Apple Music]
+        /// - App Name                            :     Apple Music
+        /// - App Version                         :     2.1.0
+        /// - App ID - WAS                        :     3201908019041
+        /// - App ID - Tizen                      :     org.tizen.apple.applemusic
+        /// -----------------------------------------------------------------------------------------------------
+        /// [11 - YouTube TV]
+        /// - App Name                            :     YouTube TV
+        /// - App Version                         :     1.0.81
+        /// - App ID - WAS                        :     3201707014489
+        /// - App ID - Tizen                      :     PvWgqxV3Xa.YouTubeTV
+        /// -----------------------------------------------------------------------------------------------------
+        /// [12 - Tubi Free Movies ＆ TV]
+        /// - App Name                            :     Tubi Free Movies ＆ TV
+        /// - App Version                         :     2.0.26
+        /// - App ID - WAS                        :     3201504001965
+        /// - App ID - Tizen                      :     3KA0pm7a7V.TubiTV
+        /// -----------------------------------------------------------------------------------------------------
+        /// [13 - Spotify Music and Podcasts]
+        /// - App Name                            :     Spotify Music and Podcasts
+        /// - App Version                         :     1.7.2
+        /// - App ID - WAS                        :     3201606009684
+        /// - App ID - Tizen                      :     rJeHak5zRg.Spotify
+        /// -----------------------------------------------------------------------------------------------------
+        /// [14 - eManual]
+        /// - App Name                            :     eManual
+        /// - App Version                         :     2.1.4
+        /// - App ID - WAS                        :     20202100004
+        /// - App ID - Tizen                      :     OzNoIbpz56.emanual
+        /// -----------------------------------------------------------------------------------------------------
+        /// [15 - HBO Max]
+        /// - App Name                            :     HBO Max
+        /// - App Version                         :     50.16.0
+        /// - App ID - WAS                        :     3201601007230
+        /// - App ID - Tizen                      :     cj37Ni3qXM.HBONow
+        /// -----------------------------------------------------------------------------------------------------
+        /// [16 - Samsung Promotion]
+        /// - App Name                            :     Samsung Promotion
+        /// - App Version                         :     3.2.9
+        /// - App ID - WAS                        :     3201807016658
+        /// - App ID - Tizen                      :     yL49PNFmjW.PromotionApp
+        /// -----------------------------------------------------------------------------------------------------
         public enum App {
             case netflix
+            case appleMusic
             case appletv
             case youtube
             case primevideo
             case disneyplus
             case spotify
-
+            case hulu
+            case hbo
             var details: (appID: String, channelURI: String) {
                 switch self {
                 case .netflix:
                     return ("3201907018807", "org.tizen.netflixapp")
                 case .appletv:
                     return ("3201807016597", "com.samsung.tv.ariavideo")
+                case .appleMusic:
+                    return ("3201908019041", "org.tizen.apple.applemusic")
                 case .youtube:
                     return ("111299001912", "com.samsung.multiscreen.youtube")
                 case .primevideo:
@@ -277,6 +377,10 @@ public struct TVRemoteCommand: Codable {
                     return ("3201901017640", "MCmYXNxgcu.DisneyPlus")
                 case .spotify:
                     return ("3201606009684", "rJeHak5zRg.Spotify")
+                case .hulu:
+                    return ("3201601007625", "LBUAQX1exg.Hulu")
+                case .hbo:
+                    return ("3201601007230", "cj37Ni3qXM.HBONow")
                 }
             }
         }
