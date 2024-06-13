@@ -50,9 +50,11 @@ class TVWebSocketHandler {
     private func webSocketDidReadPacket(_ packet: Data) {
         if let authResponse = parseAuthResponse(from: packet) {
             handleAuthResponse(authResponse)
-        } else {
-            delegate?.webSocketError(.packetDataParsingFailed)
         }
+        // TODO:  Handle lost token state
+//        else {
+//            delegate?.webSocketError(.packetDataParsingFailed)
+//        }
     }
 
     // MARK: Receive Auth
