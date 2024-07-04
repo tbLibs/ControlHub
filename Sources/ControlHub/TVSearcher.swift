@@ -103,6 +103,25 @@ public class TVSearcher: TVSearching, TVSearchObserving {
         }
     }
     
+    
+    public func castPhoto(url: URL, fileName: String) async throws {
+        if let service = connectedService {
+            let player = service.createPhotoPlayer("TVRemote")
+            try await player.playContent(url, title: fileName)
+        } else {
+            throw TVCommanderError.noServiceConnected
+        }
+    }
+    
+    public func castVideo(url: URL, fileName: String) async throws {
+        if let service = connectedService {
+            let player = service.createVideoPlayer("TVRemote")
+            try await player.playContent(url, title: fileName, thumbnailURL: nil)
+        } else {
+            throw TVCommanderError.noServiceConnected
+        }
+    }
+
     // MARK: Launch Apps
     
     public func launchApplication(app: TVRemoteCommand.Params.App) {
