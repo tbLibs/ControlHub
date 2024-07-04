@@ -20,3 +20,17 @@ extension PhotoPlayer {
         }
     }
 }
+
+extension VideoPlayer {
+    func playContent(url: URL, title: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.playContent(url, title: title, thumbnailURL: nil) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+}

@@ -107,7 +107,7 @@ public class TVSearcher: TVSearching, TVSearchObserving {
     public func castPhoto(url: URL, fileName: String) async throws {
         if let service = connectedService {
             let player = service.createPhotoPlayer("TVRemote")
-            try await player.playContent(url, title: fileName)
+            try await player.playContent(url: url, title: fileName)
         } else {
             throw TVCommanderError.noServiceConnected
         }
@@ -116,7 +116,7 @@ public class TVSearcher: TVSearching, TVSearchObserving {
     public func castVideo(url: URL, fileName: String) async throws {
         if let service = connectedService {
             let player = service.createVideoPlayer("TVRemote")
-            try await player.playContent(url, title: fileName, thumbnailURL: nil)
+            try await player.playContent(url: url, title: fileName)
         } else {
             throw TVCommanderError.noServiceConnected
         }
