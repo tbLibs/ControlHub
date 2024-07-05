@@ -28,7 +28,7 @@ public protocol TVSearchObserving: AnyObject {
     func tvSearchDidStop()
     func tvSearchDidFindTV(_ tv: TV, service: Service)
     func tvSearchDidLoseTV(_ tv: TV)
-    func tvSearchDidFailToLaunchApp(_ error: Error) // New method
+    func tvSearchDidFailToLaunchApp(_ error: TVCommanderError) // New method
 }
 
 public class TVSearcher: TVSearching, TVSearchObserving {
@@ -97,7 +97,7 @@ public class TVSearcher: TVSearching, TVSearchObserving {
         }
     }
     
-    public func tvSearchDidFailToLaunchApp(_ error: Error) {
+    public func tvSearchDidFailToLaunchApp(_ error: TVCommanderError) {
         observers.forEach {
             $0.tvSearchDidFailToLaunchApp(error)
         }
