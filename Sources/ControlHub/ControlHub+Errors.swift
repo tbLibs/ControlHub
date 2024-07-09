@@ -84,7 +84,7 @@ extension TVCommanderError: LocalizedError {
         case .appCreationFailed:
             return NSLocalizedString("Failed to create the application for the specified appID and channelURI.", comment: "")
         case .connectionError(let error):
-            return NSLocalizedString("Please check that your TV has this Application.", comment: "")
+            return NSLocalizedString("Please make sure you have this application installed on your TV.", comment: "")
         case .launchError(let error):
             return NSLocalizedString("Error occurred while launching the app: \(error.localizedDescription).", comment: "")
         case .unknownError(let error):
