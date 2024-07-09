@@ -201,6 +201,7 @@ public class TVCommander: WebSocketDelegate {
 
     public func disconnectFromTV() {
         webSocket?.disconnect()
+        isConnected = false
     }
 
     // MARK: Handler Errors
