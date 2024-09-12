@@ -330,6 +330,11 @@ public struct TVRemoteCommand: Codable {
             case ext39 = "KEY_EXT39"
             case ext40 = "KEY_EXT40"
             case ext41 = "KEY_EXT41"
+            
+            // Computed property for dynamic number keys
+            public static func dynamicNumberKey(_ number: Int) -> Self {
+                return TVRemoteCommand.Params.ControlKey(rawValue: "KEY_\(number)") ?? .number0
+            }
         }
 
 
