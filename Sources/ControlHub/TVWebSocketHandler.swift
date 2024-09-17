@@ -80,7 +80,7 @@ class TVWebSocketHandler {
     private func parseTokenFromAuthResponse(_ response: TVAuthResponse) {
         if let newToken = response.data?.token {
             delegate?.webSocketDidReadAuthToken(newToken)
-        } else if let refreshedToken = response.data?.clients.first?.attributes.token {
+        } else if let refreshedToken = response.data?.clients?.first?.attributes.token {
             delegate?.webSocketDidReadAuthToken(refreshedToken)
         } else {
             delegate?.webSocketError(.noTokenInAuthResponse(response))
