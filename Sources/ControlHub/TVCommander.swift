@@ -8,6 +8,7 @@
 import Foundation
 import Network
 import Starscream
+import UIKit
 
 public protocol TVCommanderDelegate: AnyObject {
     func tvCommanderDidConnect(_ tvCommander: TVCommander)
@@ -120,7 +121,50 @@ public class TVCommander: WebSocketDelegate {
         let params = TVRemoteCommand.Params(cmd: .click, dataOfCmd: key, option: false, typeOfRemote: .remoteKey)
         return TVRemoteCommand(method: .control, params: params)
     }
+    
+    // MARK: Send Mouse Movement Commands
 
+    public func moveMouse(dx: Int, dy: Int) {
+        guard isConnected else {
+            handleError(.remoteCommandNotConnectedToTV)
+            return
+        }
+        guard authStatus == .allowed else {
+            handleError(.remoteCommandAuthenticationStatusNotAllowed)
+            return
+        }
+        let position = TVRemoteCommand.Position(x: dx, y: dy, time: 1)
+        sendCommandOverWebSocket(createMouseRemoteCommand(position: position))
+    }
+
+    
+    private func createMouseRemoteCommand(position: TVRemoteCommand.Position) -> TVRemoteCommand {
+        let params = TVRemoteCommand.Params(cmd: .move, option: nil, typeOfRemote: .mouseDevice, position: position)
+        return TVRemoteCommand(method: .control, params: params)
+        /*
+         Mock command that sending for mouse
+         let command = """
+         {
+             "method":"ms.remote.control",
+             "params":{
+                 "Cmd":"Move",
+                 "Position":{
+                     "x":\(position.x),
+                     "y":\(position.y),
+                     "Time":"\(position.time)"
+                 },
+                 "TypeOfRemote":"ProcessMouseDevice"
+             }
+         }
+         """
+         */
+    }
+
+    private func createMouseRemoteCommandClick() -> TVRemoteCommand {
+        let params = TVRemoteCommand.Params(cmd: .leftClick, option: nil, typeOfRemote: .mouseDevice)
+        return TVRemoteCommand(method: .control, params: params)
+    }
+    
     private func sendCommandOverWebSocket(_ command: TVRemoteCommand) {
         commandQueue.append(command)
         if commandQueue.count == 1 {
@@ -138,14 +182,16 @@ public class TVCommander: WebSocketDelegate {
         }
         webSocket?.write(string: commandStr) { [weak self] in
             guard let self else { return }
-            self.commandQueue.removeFirst()
+            if !self.commandQueue.isEmpty {
+                self.commandQueue.removeFirst()
+            }
             self.delegate?.tvCommander(self, didWriteRemoteCommand: command)
             self.sendNextQueuedCommandOverWebSocket()
         }
     }
-
+    
     // MARK: Send Keyboard Commands
-
+    
     public func enterText(_ text: String, on keyboard: TVKeyboardLayout) {
         let keys = controlKeys(toEnter: text, on: keyboard)
         keys.forEach(sendRemoteCommand(key:))

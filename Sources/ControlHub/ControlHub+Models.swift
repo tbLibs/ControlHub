@@ -208,10 +208,30 @@ public struct TVRemoteCommand: Codable {
         case control = "ms.remote.control"
     }
 
+    public struct Position: Codable {
+        public let x: Int
+        public let y: Int
+        public let time: Int
+        
+        public init(x: Int, y: Int, time: Int) {
+            self.x = x
+            self.y = y
+            self.time = time
+        }
+        
+        enum CodingKeys: String, CodingKey {
+            case x = "x"
+            case y = "y"
+            case time = "Time"
+        }
+    }
+    
     /// Contains the specific parameters for a remote command
     public struct Params: Codable {
         public enum Command: String, Codable {
             case click = "Click"
+            case move = "Move"
+            case leftClick = "LeftClick"
         }
 
         /// Enum representing the keys on a TV's remote control
@@ -475,12 +495,13 @@ public struct TVRemoteCommand: Codable {
             case remoteKey = "SendRemoteKey"
         }
 
+        public let position: Position?
         /// Command to be executed, e.g., "Click"
         public let cmd: Command
         /// Specific key data associated with the command
-        public let dataOfCmd: ControlKey
+        public let dataOfCmd: ControlKey?
         /// Additional option that may modify the command's execution
-        public let option: Bool
+        public let option: Bool?
         /// Type of the remote control that the command applies to, e.g., "SendRemoteKey"
         public let typeOfRemote: ControlType
 
@@ -489,13 +510,15 @@ public struct TVRemoteCommand: Codable {
             case dataOfCmd = "DataOfCmd"
             case option = "Option"
             case typeOfRemote = "TypeOfRemote"
+            case position = "Position"
         }
 
-        public init(cmd: Command, dataOfCmd: ControlKey, option: Bool, typeOfRemote: ControlType) {
+        public init(cmd: Command, dataOfCmd: ControlKey? = nil, option: Bool? = nil, typeOfRemote: ControlType, position: Position? = nil) {
             self.cmd = cmd
             self.dataOfCmd = dataOfCmd
             self.option = option
             self.typeOfRemote = typeOfRemote
+            self.position = position
         }
     }
 
@@ -517,12 +540,13 @@ public struct TVResponse<Body: Codable>: Codable {
 
 public typealias TVAuthResponse = TVResponse<TVAuthResponseBody>
 
+// TODO:  make params optional
 /// Data payload associated with a TVAuthResponse
 public struct TVAuthResponseBody: Codable {
     /// List of clients connected to the TV
-    public let clients: [TVClient]
+    public let clients: [TVClient]?
     /// Identifier associated with an authorized connection
-    public let id: String
+    public let id: String?
     /// New token passed back with an authorized connection
     public let token: TVAuthToken?
 }
