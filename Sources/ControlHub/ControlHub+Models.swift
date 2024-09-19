@@ -350,6 +350,7 @@ public struct TVRemoteCommand: Codable {
             case ext39 = "KEY_EXT39"
             case ext40 = "KEY_EXT40"
             case ext41 = "KEY_EXT41"
+            case base64 = "base64"
             
             // Computed property for dynamic number keys
             public static func dynamicNumberKey(_ number: Int) -> Self {
@@ -497,7 +498,7 @@ public struct TVRemoteCommand: Codable {
 
         public let position: Position?
         /// Command to be executed, e.g., "Click"
-        public let cmd: Command
+        public let cmd: String
         /// Specific key data associated with the command
         public let dataOfCmd: ControlKey?
         /// Additional option that may modify the command's execution
@@ -514,11 +515,19 @@ public struct TVRemoteCommand: Codable {
         }
 
         public init(cmd: Command, dataOfCmd: ControlKey? = nil, option: Bool? = nil, typeOfRemote: ControlType, position: Position? = nil) {
-            self.cmd = cmd
+            self.cmd = cmd.rawValue
             self.dataOfCmd = dataOfCmd
             self.option = option
             self.typeOfRemote = typeOfRemote
             self.position = position
+        }
+
+        public init(cmd: String, dataOfCmd: ControlKey, typeOfRemote: ControlType) {
+            self.cmd = cmd
+            self.dataOfCmd = dataOfCmd
+            self.option = nil
+            self.typeOfRemote = typeOfRemote
+            self.position = nil
         }
     }
 

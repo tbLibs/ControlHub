@@ -165,6 +165,27 @@ public class TVCommander: WebSocketDelegate {
         return TVRemoteCommand(method: .control, params: params)
     }
     
+    public func sendInputString(text: String) {
+        guard isConnected else {
+            handleError(.remoteCommandNotConnectedToTV)
+            return
+        }
+        guard authStatus == .allowed else {
+            handleError(.remoteCommandAuthenticationStatusNotAllowed)
+            return
+        }
+        
+        if let base64Text = text.asBase64 {
+            sendCommandOverWebSocket(createKeyboardStringCommand(inputString: base64Text))
+        }
+        
+    }
+    
+    private func createKeyboardStringCommand(inputString: String) -> TVRemoteCommand {
+        let params = TVRemoteCommand.Params(cmd: inputString, dataOfCmd: .base64, typeOfRemote: .inputString)
+        return TVRemoteCommand(method: .control, params: params)
+    }
+
     private func sendCommandOverWebSocket(_ command: TVRemoteCommand) {
         commandQueue.append(command)
         if commandQueue.count == 1 {
