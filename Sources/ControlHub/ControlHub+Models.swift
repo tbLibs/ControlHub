@@ -465,6 +465,7 @@ public struct TVRemoteCommand: Codable {
             case spotify
             case hulu
             case hbo
+            case browser
             var details: (appID: String, channelURI: String) {
                 switch self {
                 case .netflix:
@@ -485,6 +486,8 @@ public struct TVRemoteCommand: Codable {
                     return ("3201601007625", "LBUAQX1exg.Hulu")
                 case .hbo:
                     return ("3201601007230", "cj37Ni3qXM.HBONow")
+                case .browser:
+                    return ("3201907018784", "org.tizen.browser")
                 }
             }
         }
