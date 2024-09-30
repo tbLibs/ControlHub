@@ -129,6 +129,11 @@ public class TVSearcher: TVSearching, TVSearchObserving {
     }
     
     private func launchApp(appID: String, channelURI: String) {
+        if channelURI == "org.tizen.browser" {
+            launchBrowser()
+            return
+        }
+        
         guard let service = connectedService else {
             tvSearchDidFailToLaunchApp(TVCommanderError.noServiceConnected)
             return
@@ -150,6 +155,31 @@ public class TVSearcher: TVSearching, TVSearchObserving {
                 }
             }
         })
+    }
+    
+    private func launchBrowser() {
+        guard let tvService = connectedService else {
+            tvSearchDidFailToLaunchApp(TVCommanderError.noServiceConnected)
+            return
+        }
+        
+        guard let browserApp = tvService.createApplication(
+            "org.tizen.browser" as AnyObject,
+            channelURI: "browser",
+            args: nil
+        ) else { return }
+            
+        browserApp.connect(nil) { client, error in
+            if let error = error {
+                self.tvSearchDidFailToLaunchApp(TVCommanderError.connectionError(error))
+            } else {
+                browserApp.start { _, error in
+                    if let error = error {
+                        self.tvSearchDidFailToLaunchApp(TVCommanderError.launchError(error))
+                    }
+                }
+            }
+        }
     }
 }
 
