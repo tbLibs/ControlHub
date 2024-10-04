@@ -12,7 +12,7 @@ import UIKit
 
 public protocol TVCommanderDelegate: AnyObject {
     func tvCommanderDidConnect(_ tvCommander: TVCommander)
-    func tvCommanderDidDisconnect(_ tvCommander: TVCommander)
+    func tvCommanderDidDisconnect(_ tvCommander: TVCommander, reason: String, code: UInt16?)
     func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus)
     func tvCommander(_ tvCommander: TVCommander, didWriteRemoteCommand command: TVRemoteCommand)
     func tvCommander(_ tvCommander: TVCommander, didEncounterError error: TVCommanderError)
@@ -310,18 +310,17 @@ public class TVCommander: WebSocketDelegate {
 }
 
 // MARK: TVWebSocketHandlerDelegate
-
 extension TVCommander: TVWebSocketHandlerDelegate {
     func webSocketDidConnect() {
         isConnected = true
         delegate?.tvCommanderDidConnect(self)
     }
     
-    func webSocketDidDisconnect() {
+    func webSocketDidDisconnect(reason: String, code: UInt16?) {
         isConnected = false
         authStatus = .none
         webSocket = nil
-        delegate?.tvCommanderDidDisconnect(self)
+        delegate?.tvCommanderDidDisconnect(self, reason: reason, code: code)
     }
     
     func webSocketDidReadAuthStatus(_ authStatus: TVAuthStatus) {

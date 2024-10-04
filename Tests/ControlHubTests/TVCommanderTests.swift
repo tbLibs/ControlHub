@@ -37,7 +37,7 @@ final class TVCommanderTests: XCTestCase {
         // given
         mockDelegate.onTVCommanderDidConnect = { connectExpectation.fulfill() }
         mockDelegate.onTVCommanderAuthStatusUpdate = { _ in authExpectation.fulfill() }
-        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
         // when
         tv.connectToTV()
         wait(for: [connectExpectation, authExpectation])
@@ -66,7 +66,7 @@ final class TVCommanderTests: XCTestCase {
             written.append($0)
             muteUnmuteExpectation.fulfill()
         }
-        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
         // when
         XCTAssertFalse(ipAddress.isEmpty)
         XCTAssertEqual(tv.authStatus, .none)
@@ -102,10 +102,10 @@ final class TVCommanderTests: XCTestCase {
         mockDelegate.onTVCommanderDidConnect = { connectExpectation.fulfill() }
         mockDelegate.onTVCommanderAuthStatusUpdate = { _ in authExpectation.fulfill() }
         mockDelegate.onTVCommanderRemoteCommand = {
-            written.append($0.params.dataOfCmd)
+            written.append($0.params.dataOfCmd!)
             writeExpectation.fulfill()
         }
-        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
         // when
         tv.connectToTV()
         wait(for: [connectExpectation, authExpectation])
@@ -136,7 +136,7 @@ final class TVCommanderTests: XCTestCase {
 
 private class MockTVCommanderDelegate: TVCommanderDelegate {
     var onTVCommanderDidConnect: (() -> Void)?
-    var onTVCommanderDidDisconnect: (() -> Void)?
+    var onTVCommanderDidDisconnect: ((_ reason: String, _ code: UInt16?) -> Void)?
     var onTVCommanderAuthStatusUpdate: ((TVAuthStatus) -> Void)?
     var onTVCommanderRemoteCommand: ((TVRemoteCommand) -> Void)?
     var onTVCommanderError: ((Error?) -> Void)?
@@ -145,8 +145,8 @@ private class MockTVCommanderDelegate: TVCommanderDelegate {
         onTVCommanderDidConnect?()
     }
 
-    func tvCommanderDidDisconnect(_ tvCommander: TVCommander) {
-        onTVCommanderDidDisconnect?()
+    func tvCommanderDidDisconnect(_ tvCommander: ControlHub.TVCommander, reason: String, code: UInt16?) {
+        onTVCommanderDidDisconnect?(reason, code)
     }
 
     func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus) {

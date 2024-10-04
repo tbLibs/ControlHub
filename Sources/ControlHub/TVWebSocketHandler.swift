@@ -10,7 +10,7 @@ import Starscream
 
 protocol TVWebSocketHandlerDelegate: AnyObject {
     func webSocketDidConnect()
-    func webSocketDidDisconnect()
+    func webSocketDidDisconnect(reason: String, code: UInt16?)
     func webSocketDidReadAuthStatus(_ authStatus: TVAuthStatus)
     func webSocketDidReadAuthToken(_ authToken: String)
     func webSocketError(_ error: TVCommanderError)
@@ -26,8 +26,10 @@ class TVWebSocketHandler {
         switch event {
         case .connected:
             delegate?.webSocketDidConnect()
-        case .cancelled, .disconnected:
-            delegate?.webSocketDidDisconnect()
+        case .cancelled:
+            delegate?.webSocketDidDisconnect(reason: "cancelled", code: nil)
+        case .disconnected(let reason, let code):
+            delegate?.webSocketDidDisconnect(reason: reason, code: code)
         case .text(let text):
             handleWebSocketText(text)
         case .binary(let data):
