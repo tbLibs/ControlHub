@@ -18,6 +18,8 @@ public enum TVCommanderError: Error {
     case urlConstructionFailed
     // WebSocket receives an error.
     case webSocketError(Error?)
+    // WebSocket Connection Rejection denied by TV
+    case webSocketRejectedFromDevice(Error?)
     // parsing for packet data fails.
     case packetDataParsingFailed
     // response for authentication contains unexpected event
@@ -63,6 +65,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Failed to construct the URL.", comment: "")
         case .webSocketError(let error):
             return NSLocalizedString("WebSocket encountered an error: \(error?.localizedDescription ?? "Unknown error").", comment: "")
+        case .webSocketRejectedFromDevice:
+            return NSLocalizedString("Make sure you have granted permission on the TV for the remote control connection.", comment: "")
         case .packetDataParsingFailed:
             return NSLocalizedString("Failed to parse the packet data.", comment: "")
         case .authResponseUnexpectedChannelEvent(_):
@@ -108,6 +112,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("URL Construction Failed", comment: "")
         case .webSocketError:
             return NSLocalizedString("WebSocket Error", comment: "")
+        case .webSocketRejectedFromDevice:
+            return NSLocalizedString("TV rejected the connection request.", comment: "")
         case .packetDataParsingFailed:
             return NSLocalizedString("Packet Data Parsing Failed", comment: "")
         case .authResponseUnexpectedChannelEvent:
