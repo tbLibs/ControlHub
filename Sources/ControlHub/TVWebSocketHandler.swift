@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Starscream
 
 protocol TVWebSocketHandlerDelegate: AnyObject {
     func webSocketDidConnect()
@@ -19,47 +18,65 @@ protocol TVWebSocketHandlerDelegate: AnyObject {
 class TVWebSocketHandler {
     private let decoder = JSONDecoder()
     weak var delegate: TVWebSocketHandlerDelegate?
+    private var webSocketTask: URLSessionWebSocketTask?
+    private let urlSession: URLSession
 
-    // MARK: Interact with WebSocket
+    init(url: URL) {
+        let configuration = URLSessionConfiguration.default
+        let sessionDelegate = CustomURLSessionDelegate()
+        urlSession = URLSession(configuration: configuration, delegate: sessionDelegate, delegateQueue: nil)
+        webSocketTask = urlSession.webSocketTask(with: url)
+    }
 
-    func didReceive(event: WebSocketEvent, client: WebSocketClient) {
-        switch event {
-        case .connected:
-            delegate?.webSocketDidConnect()
-        case .cancelled:
-            delegate?.webSocketDidDisconnect(reason: "cancelled", code: nil)
-        case .disconnected(let reason, let code):
-            delegate?.webSocketDidDisconnect(reason: reason, code: code)
-        case .text(let text):
-            handleWebSocketText(text)
-        case .binary(let data):
-            webSocketDidReadPacket(data)
-        case .error(let error):
-            delegate?.webSocketError(.webSocketError(error))
-        default:
-            break
+    func connect() {
+        webSocketTask?.resume()
+        listenForMessages()
+        delegate?.webSocketDidConnect()
+    }
+
+    func disconnect() {
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        delegate?.webSocketDidDisconnect(reason: "Manual Disconnect", code: nil)
+    }
+
+    private func listenForMessages() {
+        webSocketTask?.receive { [weak self] result in
+            switch result {
+            case .failure(let error):
+                self?.delegate?.webSocketError(.webSocketError(error))
+                self?.reconnectIfNecessary()
+            case .success(let message):
+                switch message {
+                case .data(let data):
+                    self?.webSocketDidReadPacket(data)
+                case .string(let text):
+                    if let packetData = text.data(using: .utf8) {
+                        self?.webSocketDidReadPacket(packetData)
+                    } else {
+                        self?.delegate?.webSocketError(.packetDataParsingFailed)
+                    }
+                @unknown default:
+                    break
+                }
+                self?.listenForMessages() // Continue listening for the next message
+            }
         }
     }
 
-    private func handleWebSocketText(_ text: String) {
-        if let packetData = text.asData {
-            webSocketDidReadPacket(packetData)
-        } else {
-            delegate?.webSocketError(.packetDataParsingFailed)
+    private func reconnectIfNecessary() {
+        DispatchQueue.global().asyncAfter(deadline: .now() + 5) { [weak self] in
+            guard let self = self else { return }
+            self.connect()
         }
     }
 
     private func webSocketDidReadPacket(_ packet: Data) {
         if let authResponse = parseAuthResponse(from: packet) {
             handleAuthResponse(authResponse)
+        } else {
+            delegate?.webSocketError(.packetDataParsingFailed)
         }
-        // TODO:  Handle lost token state
-//        else {
-//            delegate?.webSocketError(.packetDataParsingFailed)
-//        }
     }
-
-    // MARK: Receive Auth
 
     private func parseAuthResponse(from packet: Data) -> TVAuthResponse? {
         try? decoder.decode(TVAuthResponse.self, from: packet)
@@ -86,6 +103,16 @@ class TVWebSocketHandler {
             delegate?.webSocketDidReadAuthToken(refreshedToken)
         } else {
             delegate?.webSocketError(.noTokenInAuthResponse(response))
+        }
+    }
+
+    // Additional method to send a message
+    func sendMessage(_ message: String) {
+        let message = URLSessionWebSocketTask.Message.string(message)
+        webSocketTask?.send(message) { [weak self] error in
+            if let error = error {
+                self?.delegate?.webSocketError(.webSocketError(error))
+            }
         }
     }
 }

@@ -46,6 +46,8 @@ public enum TVCommanderError: Error {
     case launchError(Error)
     // an unknown error occurs.
     case unknownError(Error?)
+    // pairing Failed
+    case pairingFailed
 }
 
 extension TVCommanderError: LocalizedError {
@@ -89,6 +91,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Error occurred while launching the app: \(error.localizedDescription).", comment: "")
         case .unknownError(let error):
             return NSLocalizedString("An unknown error occurred: \(error?.localizedDescription ?? "Unknown error").", comment: "")
+        case .pairingFailed:
+            return NSLocalizedString("Pairing Failed", comment: "")
         }
     }
     
@@ -132,6 +136,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Launch Error", comment: "")
         case .unknownError:
             return NSLocalizedString("Unknown Error", comment: "")
+        case .pairingFailed:
+            return NSLocalizedString("Pairing Failed", comment: "")
         }
     }
 }

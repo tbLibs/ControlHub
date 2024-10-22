@@ -6,29 +6,38 @@
 //
 
 import Foundation
-import Starscream
+import Network
+import UIKit
 
 class TVWebSocketCreator {
     let builder: TVWebSocketBuilder
 
-    init(builder: TVWebSocketBuilder = .init()) {
+    init(builder: TVWebSocketBuilder = TVWebSocketBuilder()) {
         self.builder = builder
     }
 
     func createTVWebSocket(
         url: URL,
-        certPinner: CertificatePinning?,
-        delegate: WebSocketDelegate
-    ) -> WebSocket {
-        builder.setURLRequest(.init(url: url))
-        builder.setCertPinner(certPinner ?? TVDefaultWebSocketCertPinner())
+        certPinner: TVCertificatePinning? = TVDefaultWebSocketCertPinner(),
+        delegate: TVWebSocketHandlerDelegate
+    ) -> TVWebSocketHandler? {
+        let urlRequest = URLRequest(url: url)
+        builder.setURLRequest(urlRequest)
         builder.setDelegate(delegate)
-        return builder.getWebSocket()!
+        return builder.getWebSocketHandler()
     }
 }
 
-/// Default cert-pinning implementation that trusts all connections
-private class TVDefaultWebSocketCertPinner: CertificatePinning {
+enum PinningState {
+    case success
+    case failure(Error)
+}
+
+protocol TVCertificatePinning {
+    func evaluateTrust(trust: SecTrust, domain: String?, completion: ((PinningState) -> ()))
+}
+
+class TVDefaultWebSocketCertPinner: TVCertificatePinning {
     func evaluateTrust(trust: SecTrust, domain: String?, completion: ((PinningState) -> ())) {
         completion(.success)
     }

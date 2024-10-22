@@ -26,7 +26,7 @@ public protocol TVSearchRemoteInterfacing: AnyObject {
 public protocol TVSearchObserving: AnyObject {
     func tvSearchDidStart()
     func tvSearchDidStop()
-    func tvSearchDidFindTV(_ tv: TV, service: Service)
+    func tvSearchDidFindTV(_ tv: TV, service: Service?)
     func tvSearchDidLoseTV(_ tv: TV)
     func tvSearchDidFailToLaunchApp(_ error: TVCommanderError) // New method
 }
@@ -84,7 +84,7 @@ public class TVSearcher: TVSearching, TVSearchObserving {
         }
     }
 
-    public func tvSearchDidFindTV(_ tv: TV, service: Service) {
+    public func tvSearchDidFindTV(_ tv: TV, service: Service?) {
         observers.forEach {
             $0.tvSearchDidFindTV(tv, service: service)
         }

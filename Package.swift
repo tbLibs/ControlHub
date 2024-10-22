@@ -13,15 +13,17 @@ let package = Package(
             targets: ["ControlHub"]),
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/daltoniam/Starscream.git", branch: "master"),
+        // Use the forked version of socket.io-client-swift that doesn't depend on Starscream
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "ControlHub",
-            dependencies: ["SmartView", "Starscream"]),
+            dependencies: [
+                "SmartView",
+            ]
+        ),
         .binaryTarget(
             name: "SmartView",
             path: "SmartView.xcframework"),
