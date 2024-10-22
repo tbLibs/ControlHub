@@ -18,6 +18,8 @@ public enum TVCommanderError: Error {
     case urlConstructionFailed
     // WebSocket receives an error.
     case webSocketError(Error?)
+    // WebSocket Connection Rejection denied by TV
+    case webSocketRejectedFromDevice(Error?)
     // parsing for packet data fails.
     case packetDataParsingFailed
     // response for authentication contains unexpected event
@@ -46,6 +48,8 @@ public enum TVCommanderError: Error {
     case launchError(Error)
     // an unknown error occurs.
     case unknownError(Error?)
+    // pairing Failed
+    case pairingFailed
 }
 
 extension TVCommanderError: LocalizedError {
@@ -61,6 +65,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Failed to construct the URL.", comment: "")
         case .webSocketError(let error):
             return NSLocalizedString("WebSocket encountered an error: \(error?.localizedDescription ?? "Unknown error").", comment: "")
+        case .webSocketRejectedFromDevice:
+            return NSLocalizedString("Make sure you have granted permission on the TV for the remote control connection.", comment: "")
         case .packetDataParsingFailed:
             return NSLocalizedString("Failed to parse the packet data.", comment: "")
         case .authResponseUnexpectedChannelEvent(_):
@@ -89,6 +95,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Error occurred while launching the app: \(error.localizedDescription).", comment: "")
         case .unknownError(let error):
             return NSLocalizedString("An unknown error occurred: \(error?.localizedDescription ?? "Unknown error").", comment: "")
+        case .pairingFailed:
+            return NSLocalizedString("Pairing Failed", comment: "")
         }
     }
     
@@ -104,6 +112,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("URL Construction Failed", comment: "")
         case .webSocketError:
             return NSLocalizedString("WebSocket Error", comment: "")
+        case .webSocketRejectedFromDevice:
+            return NSLocalizedString("TV rejected the connection request.", comment: "")
         case .packetDataParsingFailed:
             return NSLocalizedString("Packet Data Parsing Failed", comment: "")
         case .authResponseUnexpectedChannelEvent:
@@ -132,6 +142,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Launch Error", comment: "")
         case .unknownError:
             return NSLocalizedString("Unknown Error", comment: "")
+        case .pairingFailed:
+            return NSLocalizedString("Pairing Failed", comment: "")
         }
     }
 }

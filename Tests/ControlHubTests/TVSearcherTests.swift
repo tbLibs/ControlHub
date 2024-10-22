@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import SmartView
 @testable import ControlHub
 
 final class TVSearcherTests: XCTestCase {
@@ -70,6 +71,7 @@ final class TVSearcherTests: XCTestCase {
         service.configureTargetTVId(expectedTV.id)
         service.startSearch()
         XCTAssertTrue(mockObserver.didStartSearch)
+        service.stopSearch()
         XCTAssertTrue(mockObserver.didStopSearch)
     }
 
@@ -113,7 +115,7 @@ private class MockTVSearchRemoteInterface: TVSearchRemoteInterfacing {
 
     func startSearch() {
         delegate.tvSearchDidStart()
-        findTV.flatMap { delegate.tvSearchDidFindTV($0) }
+        findTV.flatMap { delegate.tvSearchDidFindTV($0, service: nil) }
         loseTV.flatMap { delegate.tvSearchDidLoseTV($0) }
     }
 
@@ -139,7 +141,7 @@ private class MockTVSearchObserver: TVSearchObserving {
         didStopSearch = true
     }
 
-    func tvSearchDidFindTV(_ tv: TV) {
+    func tvSearchDidFindTV(_ tv: TV, service: SmartView.Service?) {
         if let expectTV, expectTV.id == tv.id {
             foundTV = tv
             didFindTV = true
@@ -152,4 +154,6 @@ private class MockTVSearchObserver: TVSearchObserving {
             didLoseTV = true
         }
     }
+    
+    func tvSearchDidFailToLaunchApp(_ error: TVCommanderError) {}
 }

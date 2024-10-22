@@ -1,57 +1,34 @@
-//
-//  TVWebSocketBuilder.swift
-//  
-//
-//  Created by Amir Daliri.
-//
+/// TVWebSocketBuilder.swift
+/// Implements the builder pattern to create instances of TVWebSocketHandler with the required configurations.
+/// Created by Amir Daliri.
 
 import Foundation
-import Starscream
 
+/// A builder class responsible for creating and configuring `TVWebSocketHandler` instances.
 class TVWebSocketBuilder {
+    
     private var urlRequest: URLRequest?
-    private var certPinner: CertificatePinning?
-    private var engine: Engine?
-    private var delegate: WebSocketDelegate?
+    private var delegate: TVWebSocketHandlerDelegate?
 
+    /// Sets the `URLRequest` to be used by the WebSocket handler.
+    /// - Parameter urlRequest: The `URLRequest` containing the URL for the WebSocket connection.
     func setURLRequest(_ urlRequest: URLRequest) {
         self.urlRequest = urlRequest
     }
     
-    func setCertPinner(_ certPinner: CertificatePinning) {
-        self.certPinner = certPinner
-    }
-    
-    func setEngine(_ engine: Engine) {
-        self.engine = engine
-    }
-
-    func setDelegate(_ delegate: WebSocketDelegate) {
+    /// Sets the delegate to handle WebSocket events.
+    /// - Parameter delegate: The delegate that will handle WebSocket events.
+    func setDelegate(_ delegate: TVWebSocketHandlerDelegate) {
         self.delegate = delegate
     }
     
-    func getWebSocket() -> WebSocket? {
-        let webSocket = createWebSocket()
-        resetBuilder()
-        return webSocket
-    }
-
-    private func createWebSocket() -> WebSocket? {
-        guard let urlRequest else { return nil }
-        let webSocket: WebSocket =
-            // prioritize using custom engine (for tests/mocks/etc)
-            engine.flatMap { .init(request: urlRequest, engine: $0) }
-            // otherwise, default to using cert pinner
-            ?? .init(request: urlRequest, certPinner: certPinner)
-        webSocket.delegate = delegate
-        webSocket.respondToPingWithPong = true
-        return webSocket
-    }
-
-    private func resetBuilder() {
-        urlRequest = nil
-        certPinner = nil
-        engine = nil
-        delegate = nil
+    /// Builds and returns a configured `TVWebSocketHandler` instance.
+    /// - Returns: A `TVWebSocketHandler` instance or `nil` if the required properties are not set.
+    func getWebSocketHandler() -> TVWebSocketHandler? {
+        guard let urlRequest = urlRequest else { return nil }
+        let url = urlRequest.url!
+        let handler = TVWebSocketHandler(url: url)
+        handler.delegate = delegate
+        return handler
     }
 }

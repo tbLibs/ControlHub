@@ -7,7 +7,6 @@
 
 import Foundation
 import Network
-import Starscream
 import UIKit
 
 public protocol TVCommanderDelegate: AnyObject {
@@ -18,20 +17,18 @@ public protocol TVCommanderDelegate: AnyObject {
     func tvCommander(_ tvCommander: TVCommander, didEncounterError error: TVCommanderError)
 }
 
-public class TVCommander: WebSocketDelegate {
+public class TVCommander: TVWebSocketHandlerDelegate {
     public weak var delegate: TVCommanderDelegate?
     private(set) public var tvConfig: TVConnectionConfiguration
     private(set) public var authStatus = TVAuthStatus.none
     private(set) public var isConnected = false
     private let webSocketCreator: TVWebSocketCreator
-    private let webSocketHandler = TVWebSocketHandler()
-    private var webSocket: WebSocket?
+    private var webSocketHandler: TVWebSocketHandler?
     private var commandQueue = [TVRemoteCommand]()
 
     init(tvConfig: TVConnectionConfiguration, webSocketCreator: TVWebSocketCreator) {
         self.tvConfig = tvConfig
         self.webSocketCreator = webSocketCreator
-        self.webSocketHandler.delegate = self
     }
 
     public convenience init(tvId: String? = nil, tvIPAddress: String, appName: String, authToken: TVAuthToken? = nil) throws {
@@ -85,7 +82,7 @@ public class TVCommander: WebSocketDelegate {
     ///     func connectTVCommander()
     ///         tvCommander.connectToTV(certPinner: self)
     ///
-    public func connectToTV(certPinner: CertificatePinning? = nil) {
+    public func connectToTV() {
         guard !isConnected else {
             handleError(.connectionAlreadyEstablished)
             return
@@ -94,13 +91,16 @@ public class TVCommander: WebSocketDelegate {
             handleError(.urlConstructionFailed)
             return
         }
-        webSocket = webSocketCreator.createTVWebSocket(
-            url: url, certPinner: certPinner, delegate: self)
-        webSocket?.connect()
-    }
-
-    public func didReceive(event: WebSocketEvent, client: WebSocketClient) {
-        webSocketHandler.didReceive(event: event, client: client)
+        webSocketHandler = webSocketCreator.createTVWebSocket(url: url, delegate: self)
+        webSocketHandler?.connect()
+        
+        // Optionally, handle timeout if the connection takes too long
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            guard let self = self else { return }
+            if !self.isConnected {
+                self.handleError(.pairingFailed)
+            }
+        }
     }
 
     // MARK: Send Remote Control Commands
@@ -201,14 +201,10 @@ public class TVCommander: WebSocketDelegate {
             handleError(.commandConversionToStringFailed)
             return
         }
-        webSocket?.write(string: commandStr) { [weak self] in
-            guard let self else { return }
-            if !self.commandQueue.isEmpty {
-                self.commandQueue.removeFirst()
-            }
-            self.delegate?.tvCommander(self, didWriteRemoteCommand: command)
-            self.sendNextQueuedCommandOverWebSocket()
-        }
+        webSocketHandler?.sendMessage(commandStr)
+        commandQueue.removeFirst()
+        delegate?.tvCommander(self, didWriteRemoteCommand: command)
+        sendNextQueuedCommandOverWebSocket()
     }
     
     // MARK: Send Keyboard Commands
@@ -267,7 +263,7 @@ public class TVCommander: WebSocketDelegate {
     // MARK: Disconnect WebSocket Connection
 
     public func disconnectFromTV() {
-        webSocket?.disconnect()
+        webSocketHandler?.disconnect()
         isConnected = false
     }
 
@@ -310,7 +306,7 @@ public class TVCommander: WebSocketDelegate {
 }
 
 // MARK: TVWebSocketHandlerDelegate
-extension TVCommander: TVWebSocketHandlerDelegate {
+extension TVCommander {
     func webSocketDidConnect() {
         isConnected = true
         delegate?.tvCommanderDidConnect(self)
@@ -319,7 +315,7 @@ extension TVCommander: TVWebSocketHandlerDelegate {
     func webSocketDidDisconnect(reason: String, code: UInt16?) {
         isConnected = false
         authStatus = .none
-        webSocket = nil
+        webSocketHandler = nil
         delegate?.tvCommanderDidDisconnect(self, reason: reason, code: code)
     }
     

@@ -1,6 +1,12 @@
+//
+//  TVCommanderTests.swift
+//
+//
+//  Created by Amir Daliri.
+//
+
 import XCTest
 import Foundation
-import Starscream
 @testable import ControlHub
 
 final class TVCommanderTests: XCTestCase {
@@ -37,7 +43,7 @@ final class TVCommanderTests: XCTestCase {
         // given
         mockDelegate.onTVCommanderDidConnect = { connectExpectation.fulfill() }
         mockDelegate.onTVCommanderAuthStatusUpdate = { _ in authExpectation.fulfill() }
-//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+        mockDelegate.onTVCommanderDidDisconnect = { _, _ in disconnectExpectation.fulfill() }
         // when
         tv.connectToTV()
         wait(for: [connectExpectation, authExpectation])
@@ -66,7 +72,7 @@ final class TVCommanderTests: XCTestCase {
             written.append($0)
             muteUnmuteExpectation.fulfill()
         }
-//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+        mockDelegate.onTVCommanderDidDisconnect = { _, _ in disconnectExpectation.fulfill() }
         // when
         XCTAssertFalse(ipAddress.isEmpty)
         XCTAssertEqual(tv.authStatus, .none)
@@ -81,7 +87,7 @@ final class TVCommanderTests: XCTestCase {
         tv.sendRemoteCommand(key: .mute)
         wait(for: [muteUnmuteExpectation])
         // then
-        XCTAssertEqual(written.map(\.params.dataOfCmd), [.mute, .mute])
+        XCTAssertEqual(written.map(\ .params.dataOfCmd), [.mute, .mute])
         // when
         tv.disconnectFromTV()
         wait(for: [disconnectExpectation])
@@ -105,7 +111,7 @@ final class TVCommanderTests: XCTestCase {
             written.append($0.params.dataOfCmd!)
             writeExpectation.fulfill()
         }
-//        mockDelegate.onTVCommanderDidDisconnect = { disconnectExpectation.fulfill() }
+        mockDelegate.onTVCommanderDidDisconnect = { _, _ in disconnectExpectation.fulfill() }
         // when
         tv.connectToTV()
         wait(for: [connectExpectation, authExpectation])
