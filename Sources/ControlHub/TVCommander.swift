@@ -82,10 +82,13 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     ///     func connectTVCommander()
     ///         tvCommander.connectToTV(certPinner: self)
     ///
-    public func connectToTV() {
-        guard !isConnected else {
-            handleError(.connectionAlreadyEstablished)
-            return
+    public func connectToTV(isForReconnection: Bool = false) {
+//        guard !isConnected else {
+//            handleError(.connectionAlreadyEstablished)
+//            return
+//        }
+        if isConnected {
+            disconnectFromTV()
         }
         guard let url = tvConfig.wssURL() else {
             handleError(.urlConstructionFailed)
@@ -94,11 +97,13 @@ public class TVCommander: TVWebSocketHandlerDelegate {
         webSocketHandler = webSocketCreator.createTVWebSocket(url: url, delegate: self)
         webSocketHandler?.connect()
         
-        // Optionally, handle timeout if the connection takes too long
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-            guard let self = self else { return }
-            if !self.isConnected {
-                self.handleError(.pairingFailed)
+        if !isForReconnection {
+            // Optionally, handle timeout if the connection takes too long
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+                guard let self = self else { return }
+                if !self.isConnected {
+                    self.handleError(.pairingFailed)
+                }
             }
         }
     }
