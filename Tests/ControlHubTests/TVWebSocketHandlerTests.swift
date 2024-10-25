@@ -92,7 +92,7 @@ private class MockTVWebSocketHandlerDelegate: TVWebSocketHandlerDelegate {
         didConnect = true
     }
 
-    func webSocketDidDisconnect(reason: String, code: UInt16?) {
+    func webSocketDidDisconnect(reason: String, code: String?) {
         didDisconnect = true
     }
 
