@@ -13,7 +13,7 @@ protocol TVWebSocketHandlerDelegate: AnyObject {
     /// - Parameters:
     ///   - reason: The reason for the disconnection.
     ///   - code: The close code if available.
-    func webSocketDidDisconnect(reason: String, code: UInt16?)
+    func webSocketDidDisconnect(reason: String, code: String?)
     
     /// Called when the WebSocket reads an authentication status.
     /// - Parameter authStatus: The authentication status received from the TV.
@@ -78,7 +78,7 @@ class TVWebSocketHandler {
                     self?.delegate?.webSocketError(.webSocketRejectedFromDevice(error))
                 } else {
                     self?.delegate?.webSocketError(.webSocketError(error))
-                    self?.delegate?.webSocketDidDisconnect(reason: error.localizedDescription, code: UInt16(error.code))
+                    self?.delegate?.webSocketDidDisconnect(reason: error.localizedDescription, code: String(error.code))
                 }
                 // Attempt to reconnect if necessary.
                 self?.reconnectIfNecessary()

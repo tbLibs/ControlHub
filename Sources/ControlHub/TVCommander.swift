@@ -11,7 +11,7 @@ import UIKit
 
 public protocol TVCommanderDelegate: AnyObject {
     func tvCommanderDidConnect(_ tvCommander: TVCommander)
-    func tvCommanderDidDisconnect(_ tvCommander: TVCommander, reason: String, code: UInt16?)
+    func tvCommanderDidDisconnect(_ tvCommander: TVCommander, reason: String, code: String?)
     func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus)
     func tvCommander(_ tvCommander: TVCommander, didWriteRemoteCommand command: TVRemoteCommand)
     func tvCommander(_ tvCommander: TVCommander, didEncounterError error: TVCommanderError)
@@ -312,7 +312,7 @@ extension TVCommander {
         delegate?.tvCommanderDidConnect(self)
     }
     
-    func webSocketDidDisconnect(reason: String, code: UInt16?) {
+    func webSocketDidDisconnect(reason: String, code: String?) {
         isConnected = false
         authStatus = .none
         webSocketHandler = nil
