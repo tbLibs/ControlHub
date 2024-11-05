@@ -34,6 +34,9 @@ class TVWebSocketHandler {
     weak var delegate: TVWebSocketHandlerDelegate? // Delegate to receive WebSocket events.
     private var webSocketTask: URLSessionWebSocketTask? // WebSocket task for managing the connection.
     private let urlSession: URLSession // URLSession to manage networking tasks.
+    private let logger = ControlHubLogger(category: "TVWebSocketHandler")
+    private var checkConnectionTimeout = true
+    private var needToListenWebSocket = true
 
     /// Initializes a new instance of `TVWebSocketHandler`.
     /// - Parameter url: The URL of the WebSocket endpoint for the TV connection.
@@ -42,6 +45,7 @@ class TVWebSocketHandler {
         let sessionDelegate = CustomURLSessionDelegate()
         urlSession = URLSession(configuration: configuration, delegate: sessionDelegate, delegateQueue: nil)
         webSocketTask = urlSession.webSocketTask(with: url)
+        logger.debug("Initialized TVWebSocketHandler with URL: \(url)")
     }
 
     /// Establishes the WebSocket connection and starts listening for messages.
@@ -49,16 +53,22 @@ class TVWebSocketHandler {
         webSocketTask?.resume()
 
         // Implement a timeout to detect if the connection fails.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 35) { [weak self] in
             guard let self = self else { return }
-            if self.webSocketTask?.state != .running {
-                self.delegate?.webSocketDidDisconnect(reason: "Connection timeout", code: nil)
-                self.webSocketTask?.cancel()
+            if self.checkConnectionTimeout {
+                if self.webSocketTask?.state != .running {
+                    self.delegate?.webSocketDidDisconnect(reason: "Connection timeout", code: nil)
+                    self.webSocketTask?.cancel()
+                    self.checkConnectionTimeout = false
+                    logger.error("Connection timeout")
+                }
             }
         }
-
+        needToListenWebSocket = true
         listenForMessages()
+        // TODO:  check real connection staus befor send this
         delegate?.webSocketDidConnect()
+        logger.debug("Connected to TV")
     }
 
     /// Disconnects the WebSocket connection.
@@ -66,32 +76,45 @@ class TVWebSocketHandler {
     func disconnect() {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         delegate?.webSocketDidDisconnect(reason: "Manual Disconnect", code: nil)
+        logger.critical("Disconnected from TV")
     }
 
     /// Listens for incoming messages from the WebSocket.
     private func listenForMessages() {
+        guard needToListenWebSocket else { return }
+        
         webSocketTask?.receive { [weak self] result in
+            self?.checkConnectionTimeout = false
+            
             switch result {
             case .failure(let error as NSError):
+                self?.webSocketTask?.cancel()
                 // Handle specific WebSocket rejection error.
                 if error.domain == NSPOSIXErrorDomain && error.code == 57 {
                     self?.delegate?.webSocketError(.webSocketRejectedFromDevice(error))
+                    self?.logger.critical("WebSocket rejected from device with error: \(error)")
+                    self?.logger.critical("WebSocket rejected from device with error code: \(error.code)")
                 } else {
                     self?.delegate?.webSocketError(.webSocketError(error))
                     self?.delegate?.webSocketDidDisconnect(reason: error.localizedDescription, code: String(error.code))
+                    // Attempt to reconnect if necessary.
+                    self?.reconnectIfNecessary()
+                    self?.logger.critical("WebSocket error: \(error)")
                 }
-                // Attempt to reconnect if necessary.
-                self?.reconnectIfNecessary()
+                
             case .success(let message):
                 // Handle different types of WebSocket messages.
                 switch message {
                 case .data(let data):
                     self?.webSocketDidReadPacket(data)
+                    self?.logger.debug("Received WebSocket data: \(data)")
                 case .string(let text):
                     if let packetData = text.data(using: .utf8) {
                         self?.webSocketDidReadPacket(packetData)
+                        self?.logger.debug("Received WebSocket text: \(text)")
                     } else {
                         self?.delegate?.webSocketError(.packetDataParsingFailed)
+                        self?.logger.critical("Failed to parse WebSocket text: \(text)")
                     }
                 @unknown default:
                     break
@@ -107,6 +130,7 @@ class TVWebSocketHandler {
         DispatchQueue.global().asyncAfter(deadline: .now() + 5) { [weak self] in
             guard let self = self else { return }
             self.connect()
+            self.logger.debug("recursive reconnect attempt")
         }
     }
 
@@ -130,6 +154,7 @@ class TVWebSocketHandler {
     /// Handles the authentication response received from the TV.
     /// - Parameter response: The authentication response to handle.
     private func handleAuthResponse(_ response: TVAuthResponse) {
+        logger.debug("received auth response: \(response)")
         switch response.event {
         case .connect:
             delegate?.webSocketDidReadAuthStatus(.allowed)
@@ -137,6 +162,8 @@ class TVWebSocketHandler {
         case .unauthorized:
             delegate?.webSocketDidReadAuthStatus(.denied)
         case .timeout:
+            needToListenWebSocket = false
+            webSocketTask?.cancel()
             delegate?.webSocketDidReadAuthStatus(.none)
         default:
             delegate?.webSocketError(.authResponseUnexpectedChannelEvent(response))
@@ -158,9 +185,11 @@ class TVWebSocketHandler {
     /// Sends a message over the WebSocket.
     /// - Parameter message: The message to be sent.
     func sendMessage(_ message: String) {
+        logger.debug("Sending message: \(message)")
         let message = URLSessionWebSocketTask.Message.string(message)
         webSocketTask?.send(message) { [weak self] error in
             if let error = error {
+                self?.logger.error("Error sending message: \(error)")
                 self?.delegate?.webSocketError(.webSocketError(error))
             }
         }
