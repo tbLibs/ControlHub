@@ -25,6 +25,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     private let webSocketCreator: TVWebSocketCreator
     private var webSocketHandler: TVWebSocketHandler?
     private var commandQueue = [TVRemoteCommand]()
+    private let logger = ControlHubLogger(category: "TVCommander")
 
     init(tvConfig: TVConnectionConfiguration, webSocketCreator: TVWebSocketCreator) {
         self.tvConfig = tvConfig
@@ -48,6 +49,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
             token: authToken
         )
         self.init(tvConfig: tvConfig, webSocketCreator: TVWebSocketCreator())
+        self.logger.info("Initializing TVCommander with configuration: \(tvConfig)")
     }
 
     public convenience init(tv: TV, appName: String, authToken: TVAuthToken? = nil) throws {
@@ -97,12 +99,16 @@ public class TVCommander: TVWebSocketHandlerDelegate {
         webSocketHandler = webSocketCreator.createTVWebSocket(url: url, delegate: self)
         webSocketHandler?.connect()
         
+        logger.info("Connecting to TV with URL: \(url)")
+        
         if !isForReconnection {
             // Optionally, handle timeout if the connection takes too long
             DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
                 guard let self = self else { return }
                 if !self.isConnected {
+                    self.disconnectFromTV()
                     self.handleError(.pairingFailed)
+                    logger.critical("ReConnection to TV timed out")
                 }
             }
         }
@@ -275,6 +281,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     // MARK: Handler Errors
 
     private func handleError(_ error: TVCommanderError) {
+        logger.critical("Error: \(error.errorDescription ?? "Unknown error")")
         delegate?.tvCommander(self, didEncounterError: error)
     }
 
@@ -315,6 +322,7 @@ extension TVCommander {
     func webSocketDidConnect() {
         isConnected = true
         delegate?.tvCommanderDidConnect(self)
+        logger.debug("WebSocket connected")
     }
     
     func webSocketDidDisconnect(reason: String, code: String?) {
@@ -322,18 +330,22 @@ extension TVCommander {
         authStatus = .none
         webSocketHandler = nil
         delegate?.tvCommanderDidDisconnect(self, reason: reason, code: code)
+        logger.debug("WebSocket disconnected: \(reason)")
     }
     
     func webSocketDidReadAuthStatus(_ authStatus: TVAuthStatus) {
         self.authStatus = authStatus
         delegate?.tvCommander(self, didUpdateAuthState: authStatus)
+        logger.debug("WebSocket auth status: \(authStatus)")
     }
     
     func webSocketDidReadAuthToken(_ authToken: String) {
         tvConfig.token = authToken
+        logger.debug("WebSocket auth token: \(authToken)")
     }
     
     func webSocketError(_ error: TVCommanderError) {
         delegate?.tvCommander(self, didEncounterError: error)
+        logger.critical("WebSocket error: \(error)")
     }
 }

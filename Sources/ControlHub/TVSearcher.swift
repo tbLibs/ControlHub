@@ -37,11 +37,13 @@ public class TVSearcher: TVSearching, TVSearchObserving {
     private var targetTVId: TV.ID?
     private var connectedService: Service?
     private var serviceSearch: ServiceSearch
+    private let logger = ControlHubLogger(category: "TVCommander")
 
     public init(remote: TVSearchRemoteInterfacing? = nil) {
         self.remote = remote ?? TVSearchAdaptor()
         self.serviceSearch = Service.search()
         self.remote.setDelegate(self)
+        logger.info("Initialized TVSearcher")
     }
 
     // MARK: Add / Remove Observers
@@ -66,10 +68,12 @@ public class TVSearcher: TVSearching, TVSearchObserving {
 
     public func startSearch() {
         remote.startSearch()
+        logger.debug("Started TV search")
     }
 
     public func stopSearch() {
         remote.stopSearch()
+        logger.debug("Stopped TV search")
     }
 
     public func tvSearchDidStart() {
