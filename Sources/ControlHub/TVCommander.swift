@@ -25,6 +25,9 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     private let webSocketCreator: TVWebSocketCreator
     private var webSocketHandler: TVWebSocketHandler?
     private var commandQueue = [TVRemoteCommand]()
+    private let logger = ControlHubLogger(category: "TVCommander")
+    private var connectionTimeoutTimer: Timer?
+    private var connectCalledForReconnect: Bool?
 
     init(tvConfig: TVConnectionConfiguration, webSocketCreator: TVWebSocketCreator) {
         self.tvConfig = tvConfig
@@ -82,11 +85,8 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     ///     func connectTVCommander()
     ///         tvCommander.connectToTV(certPinner: self)
     ///
-    public func connectToTV(isForReconnection: Bool = false) {
-//        guard !isConnected else {
-//            handleError(.connectionAlreadyEstablished)
-//            return
-//        }
+    public func connectToTV(isForReconnection: Bool? = false) {
+        connectCalledForReconnect = isForReconnection
         if isConnected {
             disconnectFromTV()
         }
@@ -96,18 +96,25 @@ public class TVCommander: TVWebSocketHandlerDelegate {
         }
         webSocketHandler = webSocketCreator.createTVWebSocket(url: url, delegate: self)
         webSocketHandler?.connect()
-        
-        if !isForReconnection {
-            // Optionally, handle timeout if the connection takes too long
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-                guard let self = self else { return }
-                if !self.isConnected {
-                    self.handleError(.pairingFailed)
-                }
-            }
+        logger.info("Connecting to TV with URL: \(url)")
+        if isForReconnection == false {
+            startConnectionTimeoutTimer()
         }
     }
 
+    private func startConnectionTimeoutTimer() {
+        connectionTimeoutTimer?.invalidate()
+        connectionTimeoutTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
+            guard let self = self, !self.isConnected else { return }
+            self.handleError(.pairingFailed)
+        }
+    }
+    
+    private func invalidateConnectionTimeoutTimer() {
+        connectionTimeoutTimer?.invalidate()
+        connectionTimeoutTimer = nil
+    }
+    
     // MARK: Send Remote Control Commands
 
     public func sendRemoteCommand(key: TVRemoteCommand.Params.ControlKey) {
@@ -270,6 +277,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     public func disconnectFromTV() {
         webSocketHandler?.disconnect()
         isConnected = false
+        invalidateConnectionTimeoutTimer()// Invalidate timer on disconnection
     }
 
     // MARK: Handler Errors
@@ -314,6 +322,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
 extension TVCommander {
     func webSocketDidConnect() {
         isConnected = true
+        invalidateConnectionTimeoutTimer() // Invalidate timer on successful connection
         delegate?.tvCommanderDidConnect(self)
     }
     
@@ -321,6 +330,7 @@ extension TVCommander {
         isConnected = false
         authStatus = .none
         webSocketHandler = nil
+        invalidateConnectionTimeoutTimer() // Invalidate timer on disconnection
         delegate?.tvCommanderDidDisconnect(self, reason: reason, code: code)
     }
     
@@ -334,6 +344,14 @@ extension TVCommander {
     }
     
     func webSocketError(_ error: TVCommanderError) {
-        delegate?.tvCommander(self, didEncounterError: error)
+        switch error {
+        case .pairingFailed, .webSocketRejectedFromDevice:
+            if connectCalledForReconnect == false, !isConnected {
+                delegate?.tvCommander(self, didEncounterError: error)
+            }
+        default:
+            delegate?.tvCommander(self, didEncounterError: error)
+        }
+        logger.critical("WebSocket error: \(error)")
     }
 }
