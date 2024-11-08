@@ -51,6 +51,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
             token: authToken
         )
         self.init(tvConfig: tvConfig, webSocketCreator: TVWebSocketCreator())
+        self.logger.info("Initializing TVCommander with configuration: \(tvConfig)")
     }
 
     public convenience init(tv: TV, appName: String, authToken: TVAuthToken? = nil) throws {
@@ -283,6 +284,7 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     // MARK: Handler Errors
 
     private func handleError(_ error: TVCommanderError) {
+        logger.critical("Error: \(error.errorDescription ?? "Unknown error")")
         delegate?.tvCommander(self, didEncounterError: error)
     }
 
@@ -324,6 +326,7 @@ extension TVCommander {
         isConnected = true
         invalidateConnectionTimeoutTimer() // Invalidate timer on successful connection
         delegate?.tvCommanderDidConnect(self)
+        logger.debug("WebSocket connected")
     }
     
     func webSocketDidDisconnect(reason: String, code: String?) {
@@ -332,15 +335,18 @@ extension TVCommander {
         webSocketHandler = nil
         invalidateConnectionTimeoutTimer() // Invalidate timer on disconnection
         delegate?.tvCommanderDidDisconnect(self, reason: reason, code: code)
+        logger.debug("WebSocket disconnected: \(reason)")
     }
     
     func webSocketDidReadAuthStatus(_ authStatus: TVAuthStatus) {
         self.authStatus = authStatus
         delegate?.tvCommander(self, didUpdateAuthState: authStatus)
+        logger.debug("WebSocket auth status: \(authStatus)")
     }
     
     func webSocketDidReadAuthToken(_ authToken: String) {
         tvConfig.token = authToken
+        logger.debug("WebSocket auth token: \(authToken)")
     }
     
     func webSocketError(_ error: TVCommanderError) {
