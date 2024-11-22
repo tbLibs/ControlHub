@@ -10,11 +10,17 @@ import Network
 import UIKit
 
 public protocol TVCommanderDelegate: AnyObject {
-    func tvCommanderDidConnect(_ tvCommander: TVCommander)
+    func tvCommanderDidConnect(_ tvCommander: TVCommander, connectCalledForReconnect: Bool?)
     func tvCommanderDidDisconnect(_ tvCommander: TVCommander, reason: String, code: String?)
-    func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus)
+    func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus, connectCalledForReconnect: Bool?)
     func tvCommander(_ tvCommander: TVCommander, didWriteRemoteCommand command: TVRemoteCommand)
     func tvCommander(_ tvCommander: TVCommander, didEncounterError error: TVCommanderError)
+}
+
+public enum ConnectionRequestState {
+    case connect
+    case reconnect
+    case disconnect
 }
 
 public class TVCommander: TVWebSocketHandlerDelegate {
@@ -322,12 +328,12 @@ public class TVCommander: TVWebSocketHandlerDelegate {
 
 // MARK: TVWebSocketHandlerDelegate
 extension TVCommander {
-    func webSocketDidConnect() {
-        isConnected = true
-        invalidateConnectionTimeoutTimer() // Invalidate timer on successful connection
-        delegate?.tvCommanderDidConnect(self)
-        logger.debug("WebSocket connected")
-    }
+//    func webSocketDidConnect() {
+//        isConnected = true
+//        invalidateConnectionTimeoutTimer() // Invalidate timer on successful connection
+//        delegate?.tvCommanderDidConnect(self)
+//        logger.debug("WebSocket connected")
+//    }
     
     func webSocketDidDisconnect(reason: String, code: String?) {
         isConnected = false
@@ -340,7 +346,8 @@ extension TVCommander {
     
     func webSocketDidReadAuthStatus(_ authStatus: TVAuthStatus) {
         self.authStatus = authStatus
-        delegate?.tvCommander(self, didUpdateAuthState: authStatus)
+        isConnected = authStatus == .allowed
+        delegate?.tvCommander(self, didUpdateAuthState: authStatus, connectCalledForReconnect: connectCalledForReconnect)
         logger.debug("WebSocket auth status: \(authStatus)")
     }
     
@@ -352,7 +359,7 @@ extension TVCommander {
     func webSocketError(_ error: TVCommanderError) {
         switch error {
         case .pairingFailed, .webSocketRejectedFromDevice:
-            if connectCalledForReconnect == false, !isConnected {
+            if !(connectCalledForReconnect ?? false) && !isConnected {
                 delegate?.tvCommander(self, didEncounterError: error)
             }
         default:

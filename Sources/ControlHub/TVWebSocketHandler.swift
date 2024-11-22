@@ -6,8 +6,8 @@ import Foundation
 
 /// Protocol defining the delegate methods for WebSocket events.
 protocol TVWebSocketHandlerDelegate: AnyObject {
-    /// Called when the WebSocket successfully connects.
-    func webSocketDidConnect()
+//    /// Called when the WebSocket successfully connects.
+//    func webSocketDidConnect()
     
     /// Called when the WebSocket disconnects.
     /// - Parameters:
@@ -37,7 +37,7 @@ class TVWebSocketHandler {
     private let logger = ControlHubLogger(category: "TVWebSocketHandler")
     private var checkConnectionTimeout = true
     private var needToListenWebSocket = true
-
+    
     /// Initializes a new instance of `TVWebSocketHandler`.
     /// - Parameter url: The URL of the WebSocket endpoint for the TV connection.
     init(url: URL) {
@@ -47,11 +47,11 @@ class TVWebSocketHandler {
         webSocketTask = urlSession.webSocketTask(with: url)
         logger.debug("Initialized TVWebSocketHandler with URL: \(url)")
     }
-
+    
     /// Establishes the WebSocket connection and starts listening for messages.
     func connect() {
         webSocketTask?.resume()
-
+        // TODO:  check this with Baris
         // Implement a timeout to detect if the connection fails.
         DispatchQueue.main.asyncAfter(deadline: .now() + 35) { [weak self] in
             guard let self = self else { return }
@@ -65,12 +65,10 @@ class TVWebSocketHandler {
             }
         }
         needToListenWebSocket = true
-        listenForMessages()
-        // TODO:  check real connection staus befor send this
-        delegate?.webSocketDidConnect()
+        listenForMessages() // Start listening for messages
         logger.debug("Connected to TV")
     }
-
+    
     /// Disconnects the WebSocket connection.
     /// Notifies the delegate about the disconnection.
     func disconnect() {
@@ -78,7 +76,14 @@ class TVWebSocketHandler {
         delegate?.webSocketDidDisconnect(reason: "Manual Disconnect", code: nil)
         logger.critical("Disconnected from TV")
     }
-
+    
+    private func mockFailedListen() {
+        let error = NSError(domain: "WebSocket", code: 57, userInfo: [NSLocalizedDescriptionKey: "WebSocket rejected from device."])
+        delegate?.webSocketError(.webSocketRejectedFromDevice(error))
+        logger.critical("WebSocket rejected from device with error: \(error)")
+        logger.critical("WebSocket rejected from device with error code: \(error.code)")
+    }
+    
     /// Listens for incoming messages from the WebSocket.
     private func listenForMessages() {
         guard needToListenWebSocket else { return }
@@ -124,7 +129,7 @@ class TVWebSocketHandler {
             }
         }
     }
-
+    
     /// Attempts to reconnect the WebSocket after a delay.
     private func reconnectIfNecessary() {
         DispatchQueue.global().asyncAfter(deadline: .now() + 5) { [weak self] in
@@ -133,7 +138,7 @@ class TVWebSocketHandler {
             self.logger.debug("recursive reconnect attempt")
         }
     }
-
+    
     /// Handles incoming packet data from the WebSocket.
     /// - Parameter packet: The data packet received from the WebSocket.
     private func webSocketDidReadPacket(_ packet: Data) {
@@ -143,14 +148,14 @@ class TVWebSocketHandler {
             delegate?.webSocketError(.packetDataParsingFailed)
         }
     }
-
+    
     /// Parses the authentication response from the given packet.
     /// - Parameter packet: The data packet to parse.
     /// - Returns: A `TVAuthResponse` object if parsing is successful, otherwise `nil`.
     private func parseAuthResponse(from packet: Data) -> TVAuthResponse? {
         try? decoder.decode(TVAuthResponse.self, from: packet)
     }
-
+    
     /// Handles the authentication response received from the TV.
     /// - Parameter response: The authentication response to handle.
     private func handleAuthResponse(_ response: TVAuthResponse) {
@@ -169,7 +174,7 @@ class TVWebSocketHandler {
             delegate?.webSocketError(.authResponseUnexpectedChannelEvent(response))
         }
     }
-
+    
     /// Parses the token from the authentication response and notifies the delegate.
     /// - Parameter response: The authentication response containing the token.
     private func parseTokenFromAuthResponse(_ response: TVAuthResponse) {
@@ -185,6 +190,14 @@ class TVWebSocketHandler {
     /// Sends a message over the WebSocket.
     /// - Parameter message: The message to be sent.
     func sendMessage(_ message: String) {
+        // if user leave the app open and iphone has not auto lock screen, need for disconnect need to uncomment this part
+        if webSocketTask?.state != .running {
+            logger.critical("WebSocket is not connected.")
+            self.delegate?.webSocketDidDisconnect(reason: "WebSocket Connection did broke", code: nil)
+            self.webSocketTask?.cancel()
+            return
+        }
+        
         logger.debug("Sending message: \(message)")
         let message = URLSessionWebSocketTask.Message.string(message)
         webSocketTask?.send(message) { [weak self] error in
@@ -192,6 +205,27 @@ class TVWebSocketHandler {
                 self?.logger.error("Error sending message: \(error)")
                 self?.delegate?.webSocketError(.webSocketError(error))
             }
+        }
+    }
+    
+    /// Sends a message over the WebSocket.
+    /// - Parameter message: The message to be sent.
+    func sendMessage(_ message: String) async throws {
+        logger.debug("Sending message: \(message)")
+        
+        guard let webSocketTask = webSocketTask else {
+            throw TVCommanderError.webSocketError(NSError.init(domain: "WebSocket Not Connected", code: 500))
+        }
+        
+        let webSocketMessage = URLSessionWebSocketTask.Message.string(message)
+        
+        do {
+            try await webSocketTask.send(webSocketMessage)
+            logger.debug("Message sent successfully.")
+        } catch {
+            logger.error("Error sending message: \(error)")
+            delegate?.webSocketError(.webSocketError(error))
+            throw error // Propagate error to the caller
         }
     }
 }

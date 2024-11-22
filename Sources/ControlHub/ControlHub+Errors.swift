@@ -50,6 +50,8 @@ public enum TVCommanderError: Error {
     case unknownError(Error?)
     // pairing Failed
     case pairingFailed
+    // connection failed
+    case webSocketNotConnected
 }
 
 extension TVCommanderError: LocalizedError {
@@ -97,6 +99,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("An unknown error occurred: \(error?.localizedDescription ?? "Unknown error").", comment: "")
         case .pairingFailed:
             return NSLocalizedString("Pairing Failed", comment: "")
+        case .webSocketNotConnected:
+            return NSLocalizedString("WebScoket Not Connected", comment: "")
         }
     }
     
@@ -144,6 +148,8 @@ extension TVCommanderError: LocalizedError {
             return NSLocalizedString("Unknown Error", comment: "")
         case .pairingFailed:
             return NSLocalizedString("Pairing Failed", comment: "")
+        case .webSocketNotConnected:
+            return NSLocalizedString("WebSocket Not Connected", comment: "")
         }
     }
 }
