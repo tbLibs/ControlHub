@@ -29,7 +29,7 @@ protocol TVWebSocketHandlerDelegate: AnyObject {
 }
 
 /// Class responsible for managing the WebSocket connection to a TV, including connection, disconnection, and message handling.
-class TVWebSocketHandler {
+public class TVWebSocketHandler {
     private let decoder = JSONDecoder() // JSON decoder to parse incoming WebSocket messages.
     weak var delegate: TVWebSocketHandlerDelegate? // Delegate to receive WebSocket events.
     private var webSocketTask: URLSessionWebSocketTask? // WebSocket task for managing the connection.
@@ -189,7 +189,7 @@ class TVWebSocketHandler {
 
     /// Sends a message over the WebSocket.
     /// - Parameter message: The message to be sent.
-    func sendMessage(_ message: String) {
+    public func sendMessage(_ message: String) {
         // if user leave the app open and iphone has not auto lock screen, need for disconnect need to uncomment this part
         if webSocketTask?.state != .running {
             logger.critical("WebSocket is not connected.")
@@ -210,7 +210,7 @@ class TVWebSocketHandler {
     
     /// Sends a message over the WebSocket.
     /// - Parameter message: The message to be sent.
-    func sendMessage(_ message: String) async throws {
+    public func sendMessage(_ message: String) async throws {
         logger.debug("Sending message: \(message)")
         
         guard let webSocketTask = webSocketTask else {

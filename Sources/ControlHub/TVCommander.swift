@@ -28,8 +28,8 @@ public class TVCommander: TVWebSocketHandlerDelegate {
     private(set) public var tvConfig: TVConnectionConfiguration
     private(set) public var authStatus = TVAuthStatus.none
     private(set) public var isConnected = false
-    let webSocketCreator: TVWebSocketCreator
-    var webSocketHandler: TVWebSocketHandler?
+    public let webSocketCreator: TVWebSocketCreator
+    public var webSocketHandler: TVWebSocketHandler?
     private var commandQueue = [TVRemoteCommand]()
     private let logger = ControlHubLogger(category: "TVCommander")
     private var connectionTimeoutTimer: Timer?
