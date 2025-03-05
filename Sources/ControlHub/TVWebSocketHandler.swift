@@ -120,7 +120,7 @@ public class TVWebSocketHandler {
                 case .string(let text):
                     if let packetData = text.data(using: .utf8) {
                         self?.webSocketDidReadPacket(packetData)
-                        self.delegate?.webSocketDidReceive(text)
+                        self?.delegate?.webSocketDidReceive(text)
                         self?.logger.debug("Received WebSocket text: \(text)")
                     } else {
                         self?.delegate?.webSocketError(.packetDataParsingFailed)
