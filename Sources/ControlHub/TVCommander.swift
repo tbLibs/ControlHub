@@ -15,6 +15,7 @@ public protocol TVCommanderDelegate: AnyObject {
     func tvCommander(_ tvCommander: TVCommander, didUpdateAuthState authStatus: TVAuthStatus, connectCalledForReconnect: Bool?)
     func tvCommander(_ tvCommander: TVCommander, didWriteRemoteCommand command: TVRemoteCommand)
     func tvCommander(_ tvCommander: TVCommander, didEncounterError error: TVCommanderError)
+    func tvCommander(_ tvCommander: TVCommander, didReceive text: String)
 }
 
 public enum ConnectionRequestState {
@@ -335,6 +336,7 @@ extension TVCommander {
 //        logger.debug("WebSocket connected")
 //    }
     
+    
     func webSocketDidDisconnect(reason: String, code: String?) {
         isConnected = false
         authStatus = .none
@@ -367,4 +369,9 @@ extension TVCommander {
         }
         logger.critical("WebSocket error: \(error)")
     }
+    
+    func webSocketDidReceive(_ text: String) {
+        delegate?.tvCommander(self, didReceive: text)
+    }
+    
 }

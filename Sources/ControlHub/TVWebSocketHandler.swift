@@ -26,6 +26,10 @@ protocol TVWebSocketHandlerDelegate: AnyObject {
     /// Called when an error occurs in the WebSocket.
     /// - Parameter error: The error that occurred.
     func webSocketError(_ error: TVCommanderError)
+    
+    /// 接收到的text
+    /// - Parameter text: text
+    func webSocketDidReceive(_ text: String)
 }
 
 /// Class responsible for managing the WebSocket connection to a TV, including connection, disconnection, and message handling.
@@ -116,6 +120,7 @@ public class TVWebSocketHandler {
                 case .string(let text):
                     if let packetData = text.data(using: .utf8) {
                         self?.webSocketDidReadPacket(packetData)
+                        self.delegate?.webSocketDidReceive(packetData)
                         self?.logger.debug("Received WebSocket text: \(text)")
                     } else {
                         self?.delegate?.webSocketError(.packetDataParsingFailed)
