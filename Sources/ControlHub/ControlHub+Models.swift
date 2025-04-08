@@ -351,6 +351,7 @@ public struct TVRemoteCommand: Codable {
             case ext40 = "KEY_EXT40"
             case ext41 = "KEY_EXT41"
             case base64 = "base64"
+            case exit = "KEY_EXIT" // 添加退出键
             
             // Computed property for dynamic number keys
             public static func dynamicNumberKey(_ number: Int) -> Self {
